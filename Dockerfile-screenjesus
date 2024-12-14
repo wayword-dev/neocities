@@ -1,0 +1,59 @@
+FROM ubuntu:jammy
+
+# Common
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y openntpd tzdata wget
+
+RUN echo 'UTC' | tee /etc/timezone
+RUN dpkg-reconfigure -f noninteractive tzdata
+
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y && rm google-chrome-stable_current_amd64.deb
+
+# Ruby
+RUN apt-get -y install autoconf patch build-essential rustc libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libgmp-dev libncurses5-dev libffi-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev
+RUN wget https://cache.ruby-lang.org/pub/ruby/3.3/ruby-3.3.0.tar.gz && \
+      gzip -dc ruby-3.3.0.tar.gz | tar xf - && \
+      cd ruby-3.3.0 && \
+      ./autogen.sh && \
+      ./configure --enable-yjit --disable-install-doc && \
+      make -j && make install && \
+      cd ..
+
+# WebApp
+
+RUN apt-get install -y \
+      build-essential \
+      curl \
+      file \
+      git \
+      imagemagick \
+      libcurl4-openssl-dev \
+      libffi-dev \
+      libimlib2-dev \
+      libmagic-dev \
+      libmagickwand-dev \
+      libpq-dev \
+      libreadline-dev \
+      libssl-dev \
+      libwebp-dev \
+      libxml2-dev \
+      libxslt1-dev \
+      libyaml-dev \
+      zlib1g-dev
+
+ENV BUNDLE_PATH "/vendor"
+ARG USERNAME=screenjesus
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN mkdir $BUNDLE_PATH && chown $USER_UID:$USER_GID $BUNDLE_PATH
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -r -G audio,video
+USER $USERNAME
+COPY --chown=$USER_UID:$USER_GID screenjesus/Gemfile /Gemfile
+COPY --chown=$USER_UID:$USER_GID screenjesus/Gemfile.lock /Gemfile.lock
+ENV BUNDLE_PATH "/vendor"
+RUN cd / && bundle install

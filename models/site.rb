@@ -1663,7 +1663,7 @@ class Site < Sequel::Model
   def screenshot_url(path, resolution)
     path[0] = '' if path[0] == '/'
     out = ''
-    out = 'https://neocities.org' if ENV['RACK_ENV'] == 'development'
+    out = 'http://localhost:9292' if ENV['RACK_ENV'] == 'development'
     out+"#{base_screenshots_url}/#{self.class.escape_path path}.#{resolution}.webp"
   end
 

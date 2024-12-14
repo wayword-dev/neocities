@@ -1,0 +1,73 @@
+services:
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: ["CMD", "test", "$(redis-cli PING) = PONG"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      start_interval: 1s
+    command: ["redis-server", "--appendonly yes"]
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: pg_root
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d postgres -U postgres" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      start_interval: 1s
+    volumes:
+      - ./pg_setup.sh:/docker-entrypoint-initdb.d/pg_setup.sh
+  sidekiq:
+    build:
+      dockerfile: Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - site_thumbnails:/app/public/site_thumbnails
+      - sites:/app/public/sites
+      - site_screenshots:/app/public/site_screenshots
+      - site_screenshots_test:/app/public/site_screenshots_test
+      - site_thumbnails_test:/app/public/site_thumbnails_test
+    working_dir: /app
+    command: bundle exec sidekiq -r ./environment.rb
+  screenjesus:
+    build:
+      dockerfile: Dockerfile-screenjesus
+    volumes:
+      - ./screenjesus:/app
+    working_dir: /app
+    cap_add: ["SYS_ADMIN"] # https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-145731454
+    entrypoint: bundle exec ruby pup.rb -o 0.0.0.0
+    ports:
+      - 4567:4567
+  main:
+    build:
+      dockerfile: Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - site_thumbnails:/app/public/site_thumbnails
+      - sites:/app/public/sites
+      - site_screenshots:/app/public/site_screenshots
+      - site_screenshots_test:/app/public/site_screenshots_test
+      - site_thumbnails_test:/app/public/site_thumbnails_test
+    working_dir: /app
+    entrypoint: bundle exec rackup -o 0.0.0.0
+    ports:
+      - 9292:9292
+
+volumes:
+  site_thumbnails:
+  sites:
+  site_screenshots:
+  site_screenshots_test:
+  site_thumbnails_test:

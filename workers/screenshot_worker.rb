@@ -39,7 +39,8 @@ class ScreenshotWorker
     api_user, api_password = uri.user, uri.password
 
     uri = "#{uri.scheme}://#{uri.host}:#{uri.port}" + '?' + Rack::Utils.build_query(
-      url: site.uri(path),
+      # url: site.uri(path),
+      url: "http://main:9292/sites/#{Site.sharding_dir(username)}/#{username}#{path}",
       wait_time: PAGE_WAIT_TIME
     )
     begin
@@ -74,12 +75,18 @@ class ScreenshotWorker
           opts.merge! crop_x: 160, crop_y: 0, crop_w: 960, crop_h: 960
         end
 
-        WebP.encode base_image_tmpfile_path, full_screenshot_path, opts
+        begin
+          WebP.encode base_image_tmpfile_path, full_screenshot_path, opts
+        rescue WebP::EncoderError => e
+          puts "Failed: #{username} #{path} #{e.inspect}"
+          opts = {resize_w: width, resize_h: height, near_lossless: 0}
+          WebP.encode base_image_tmpfile_path, full_screenshot_path, opts
+        end
       end
 
       true
     rescue WebP::EncoderError => e
-      puts "Failed: #{username} #{path} #{e.inspect}"
+      puts "Hard failed: #{username} #{path} #{e.inspect}"
     rescue => e
       raise e
     ensure

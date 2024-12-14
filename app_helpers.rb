@@ -32,6 +32,7 @@ end
 def current_site
   return nil if session[:id].nil?
   @_site ||= Site[id: session[:id]]
+  return nil if @_site.nil?
   @_parent_site ||= @_site.parent
 
   if @_site.is_banned || @_site.is_deleted || (@_parent_site && (@_parent_site.is_banned || @_parent_site.is_deleted))

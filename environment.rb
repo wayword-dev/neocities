@@ -69,11 +69,15 @@ sidekiq_redis_config[:url] = $config['sidekiq_url'] if $config['sidekiq_url']
 # :nocov:
 Sidekiq.configure_server do |config|
   config.redis = sidekiq_redis_config
+  config.queues = %w[screenshots emails purgecache thumbnails]
+  config.logger = Sidekiq::Logger.new($stdout)
 end
 # :nocov:
 
 Sidekiq.configure_client do |config|
-  config.logger = nil
+  # config.logger = nil
+  config.logger = Sidekiq::Logger.new($stdout)
+  # config.queues = %w[screenshots emails purgecache thumbnails]
   config.redis = sidekiq_redis_config
 end
 
