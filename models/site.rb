@@ -65,7 +65,7 @@ class Site < Sequel::Model
   # FIXME smarter DIR_ROOT discovery
   DIR_ROOT               = './'
   TEMPLATE_ROOT          = File.join DIR_ROOT, 'views', 'templates'
-  PUBLIC_ROOT            = File.join DIR_ROOT, 'public'
+  PUBLIC_ROOT            = ENV['RACK_ENV'] == 'development' ? '/public' : File.join(DIR_ROOT, 'public')
   SITE_FILES_ROOT        = File.join PUBLIC_ROOT, (ENV['RACK_ENV'] == 'test' ? 'sites_test' : 'sites')
   SCREENSHOTS_ROOT       = File.join(PUBLIC_ROOT, (ENV['RACK_ENV'] == 'test' ? 'site_screenshots_test' : 'site_screenshots'))
   THUMBNAILS_ROOT        = File.join(PUBLIC_ROOT, (ENV['RACK_ENV'] == 'test' ? 'site_thumbnails_test' : 'site_thumbnails'))

@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_PASSWORD: pg_root
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d postgres -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -d neocities -U postgres" ]
       interval: 30s
       timeout: 10s
       start_period: 60s
@@ -27,12 +27,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./:/app
-      - site_thumbnails:/app/public/site_thumbnails
-      - sites:/app/public/sites
-      - site_screenshots:/app/public/site_screenshots
-      - site_screenshots_test:/app/public/site_screenshots_test
-      - site_thumbnails_test:/app/public/site_thumbnails_test
+      - ./:/app:ro
+      - public:/public
     working_dir: /app
     command: bundle exec sidekiq -r ./environment.rb
   screenjesus:
@@ -52,10 +48,7 @@ services:
       - 9292:80
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - sites:/usr/share/nginx/html/sites:ro
-      - site_screenshots:/usr/share/nginx/html/site_screenshots:ro
-      - site_screenshots_test:/usr/share/nginx/html/site_screenshots_test:ro
-      - site_thumbnails_test:/usr/share/nginx/html/site_thumbnails_test:ro
+      - public:/usr/share/nginx/html/neocities:ro
       - nginx_logs:/etc/nginx/logs
   main:
     build:
@@ -66,18 +59,11 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - site_thumbnails:/app/public/site_thumbnails
-      - sites:/app/public/sites
-      - site_screenshots:/app/public/site_screenshots
-      - site_screenshots_test:/app/public/site_screenshots_test
-      - site_thumbnails_test:/app/public/site_thumbnails_test
+      - ./:/app
+      - public:/public
     working_dir: /app
     entrypoint: bundle exec rackup -o 0.0.0.0
 
 volumes:
   nginx_logs:
-  site_thumbnails:
-  sites:
-  site_screenshots:
-  site_screenshots_test:
-  site_thumbnails_test:
+  public:

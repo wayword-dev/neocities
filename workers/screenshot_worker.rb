@@ -39,8 +39,7 @@ class ScreenshotWorker
     api_user, api_password = uri.user, uri.password
 
     uri = "#{uri.scheme}://#{uri.host}:#{uri.port}" + '?' + Rack::Utils.build_query(
-      # url: site.uri(path),
-      url: "http://main:9292/sites/#{Site.sharding_dir(username)}/#{username}#{path}",
+      url: ENV['RACK_ENV'] == 'development' ? "http://nginx:80/sites/#{Site.sharding_dir(username)}/#{username}#{path}" : site.uri(path),
       wait_time: PAGE_WAIT_TIME
     )
     begin

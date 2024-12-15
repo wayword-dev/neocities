@@ -66,9 +66,8 @@ USER $USERNAME
 COPY Gemfile /Gemfile
 COPY Gemfile.lock /Gemfile.lock
 RUN cd / && bundle install
-COPY --chown=$USER_UID:$USER_GID . /app
-RUN mkdir /app/public/site_thumbnails \
-      /app/public/sites \
-      /app/public/site_screenshots \
-      /app/public/site_screenshots_test \
-      /app/public/site_thumbnails_test
+USER root
+RUN mkdir /public && chown $USER_UID /public
+USER $USERNAME
+
+VOLUME /public
