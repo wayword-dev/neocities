@@ -39,12 +39,24 @@ services:
     build:
       dockerfile: Dockerfile-screenjesus
     volumes:
-      - ./screenjesus:/app
+      - ./screenjesus:/app:ro
     working_dir: /app
     cap_add: ["SYS_ADMIN"] # https://github.com/jessfraz/dockerfiles/issues/65#issuecomment-145731454
     entrypoint: bundle exec ruby pup.rb -o 0.0.0.0
     ports:
       - 4567:4567
+  nginx:
+    build:
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 9292:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - sites:/usr/share/nginx/html/sites:ro
+      - site_screenshots:/usr/share/nginx/html/site_screenshots:ro
+      - site_screenshots_test:/usr/share/nginx/html/site_screenshots_test:ro
+      - site_thumbnails_test:/usr/share/nginx/html/site_thumbnails_test:ro
+      - nginx_logs:/etc/nginx/logs
   main:
     build:
       dockerfile: Dockerfile
@@ -54,7 +66,6 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./:/app
       - site_thumbnails:/app/public/site_thumbnails
       - sites:/app/public/sites
       - site_screenshots:/app/public/site_screenshots
@@ -62,10 +73,9 @@ services:
       - site_thumbnails_test:/app/public/site_thumbnails_test
     working_dir: /app
     entrypoint: bundle exec rackup -o 0.0.0.0
-    ports:
-      - 9292:9292
 
 volumes:
+  nginx_logs:
   site_thumbnails:
   sites:
   site_screenshots:

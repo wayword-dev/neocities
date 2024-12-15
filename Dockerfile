@@ -1,15 +1,10 @@
 FROM ubuntu:jammy
 
 # Common
-RUN apt-get -y update
-RUN apt-get -y upgrade
+RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get install -y openntpd tzdata wget
 
-RUN echo 'UTC' | tee /etc/timezone
-RUN dpkg-reconfigure -f noninteractive tzdata
-
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y && rm google-chrome-stable_current_amd64.deb
+RUN echo 'UTC' | tee /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
 
 # Ruby
 RUN apt-get -y install autoconf patch build-essential rustc libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libgmp-dev libncurses5-dev libffi-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev
@@ -19,7 +14,7 @@ RUN wget https://cache.ruby-lang.org/pub/ruby/3.3/ruby-3.3.0.tar.gz && \
       ./autogen.sh && \
       ./configure --enable-yjit --disable-install-doc && \
       make -j && make install && \
-      cd ..
+      cd .. && rm -r ruby-3.3.0
 
 # WebApp
 RUN apt-get install -y \
@@ -56,7 +51,24 @@ RUN rm -f main.cvd daily.cld daily.cvd bytecode.cvd main.cvd.sha256 daily.cvd.sh
 # RUN systemctl enable clamav-daemon
 # RUN systemctl start clamav-daemon
 
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y && rm google-chrome-stable_current_amd64.deb
+
+ENV BUNDLE_PATH "/vendor"
+ARG USERNAME=user
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN mkdir $BUNDLE_PATH && chown $USER_UID:$USER_GID $BUNDLE_PATH
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -r -G audio,video
+USER $USERNAME
 COPY Gemfile /Gemfile
 COPY Gemfile.lock /Gemfile.lock
-ENV BUNDLE_PATH /vendor
 RUN cd / && bundle install
+COPY --chown=$USER_UID:$USER_GID . /app
+RUN mkdir /app/public/site_thumbnails \
+      /app/public/sites \
+      /app/public/site_screenshots \
+      /app/public/site_screenshots_test \
+      /app/public/site_thumbnails_test

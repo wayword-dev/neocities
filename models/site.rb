@@ -1421,11 +1421,13 @@ class Site < Sequel::Model
   end
 
   def host
+    return "localhost:9292/sites/#{sharding_dir}/#{values[:username]}" if ENV['RACK_ENV'] == 'development'
     !domain.empty? ? domain : "#{username}.neocities.org"
   end
 
   def default_schema
     # Switch-over for when SSL defaulting is ready
+    return 'http' if ENV['RACK_ENV'] == 'development'
     'https'
   end
 

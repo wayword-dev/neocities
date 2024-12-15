@@ -81,7 +81,7 @@
           <% if current_site && event_site.id == current_site.id %>
             You updated your site.
           <% else %>
-            <a href="/site/<%= event_site.username %>" class="user" title="<%= event_site.title %>"><i class="fa fa-user"><% if event_site.supporter? %><i class="fa fa-heart"></i><% end %></i><%= event_site.username %></a> updated <a href="https://<%= event_site.host %>" class="user" title="<%= event_site.title %>"><%= event_site.title.shorten(45) %></a>
+            <a href="/site/<%= event_site.username %>" class="user" title="<%= event_site.title %>"><i class="fa fa-user"><% if event_site.supporter? %><i class="fa fa-heart"></i><% end %></i><%= event_site.username %></a> updated <a href="<%= event_site.uri %>" class="user" title="<%= event_site.title %>"><%= event_site.title.shorten(45) %></a>
           <% end %>
         </div>
         <span class="date">
@@ -95,7 +95,7 @@
             <% site_change_filenames.each do |f| %>
               <div class="file">
                 <div class="html-thumbnail <%= site_change_file_display_class f %>">
-                  <a href="https://<%= event_site.host %><%= f == 'index.html' ? '' : "/#{f}" %>">
+                  <a href="<%= event_site.uri(f == 'index.html' ? '' : "/#{f}") %>">
                     <% if site_change_file_display_class(f) == 'html' %>
                       <img src="<%= event_site.screenshot_url(f, '540x405') %>">
                     <% elsif site_change_file_display_class(f) == 'image' %>
