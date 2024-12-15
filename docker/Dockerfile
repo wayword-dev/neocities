@@ -58,11 +58,14 @@ ARG USERNAME=user
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN mkdir $BUNDLE_PATH && chown $USER_UID:$USER_GID $BUNDLE_PATH
+RUN mkdir /public && chown $USER_UID /public
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -r -G audio,video
 USER $USERNAME
-COPY --chown=$USER_UID:$USER_GID screenjesus/Gemfile /Gemfile
-COPY --chown=$USER_UID:$USER_GID screenjesus/Gemfile.lock /Gemfile.lock
+COPY --chown=$USER_UID:$USER_GID Gemfile /Gemfile
+COPY --chown=$USER_UID:$USER_GID Gemfile.lock /Gemfile.lock
 RUN cd / && bundle install
+
+VOLUME /public
